@@ -1,0 +1,4 @@
+khordastan_env/
+*.pyc
+.idea/
+__pycache__/
