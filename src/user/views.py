@@ -2,7 +2,7 @@ from flask import jsonify, json, render_template, request
 from . import user_blureprint
 from .models import User
 from src.authentication.models import AuthenticationManager
-from flask_login import login_required,current_user
+from flask_login import login_required, current_user
 from mongoengine import errors as MongoEngineException
 
 
@@ -24,7 +24,7 @@ def register():
     except:
         return jsonify({'result': False, 'code': 403})
     try:
-        AuthenticationManager.register_user(phonenumber, email,password, fname, lname, sex, age, address, melli_code)
+        AuthenticationManager.register_user(phonenumber, email, password, fname, lname, sex, age, address, melli_code)
 
         return jsonify({'result': True, 'code': 200})
     except MongoEngineException.NotUniqueError:
@@ -57,8 +57,25 @@ def login():
     #     print(e)
     #     return jsonify({'result': False, 'code': 500})
 
+
 @user_blureprint.route('/currentuser', methods=['get'])
 @login_required
 def CurrentUser():
+    return jsonify({'user_info': {
+        'fname': current_user.fname,
+        'lname': current_user.lname,
+        'age': current_user.age,
+        'email': current_user.email,
+        'sex': current_user.sex,
+        'address': current_user.address,
+        'melli_code': current_user.melli_code,
+        'role': current_user.role,
+        'register_time': current_user.datetime}
+        , 'code': 200})
 
-    return jsonify({'user_info':{'fname':current_user.fname,'lname':current_user.lname}, 'code': 200})
+
+@user_blureprint.route('/dropdb')
+def drop_db():
+    from src import db
+    db.connection.drop_database('shenava')
+    return'done'

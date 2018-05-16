@@ -22,3 +22,13 @@ app.register_blueprint(exam_blureprint, url_prefix='/exam')
 @app.errorhandler(401)
 def error_401(error):
     return jsonify({'result': False, 'code': 401})
+
+
+
+@app.before_request
+def kos():
+    print(request.headers)
+    print('_____________________________')
+    print(request.args)
+    print('_____________________________')
+    print(request.json)

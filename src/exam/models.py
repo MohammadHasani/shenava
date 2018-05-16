@@ -28,14 +28,136 @@ class PureTone(db.EmbeddedDocument):
         return self
 
 
+class Single(db.EmbeddedDocument):
+    start_time = db.DateTimeField()
+    d1 = db.ListField()
+    d2 = db.ListField()
+    d3 = db.ListField()
+    d4 = db.ListField()
+    d5 = db.ListField()
+    d6 = db.ListField()
+    d7 = db.ListField()
+    d8 = db.ListField()
+    d9 = db.ListField()
+    d10 = db.ListField()
+    d11 = db.ListField()
+    d12 = db.ListField()
+    d13 = db.ListField()
+    d14 = db.ListField()
+    d15 = db.ListField()
+    d16 = db.ListField()
+    d17 = db.ListField()
+    d18 = db.ListField()
+    d19 = db.ListField()
+    d20 = db.ListField()
+    d21 = db.ListField()
+    d22 = db.ListField()
+    d23 = db.ListField()
+    d24 = db.ListField()
+    d25 = db.ListField()
+
+    def create(self, property, result):
+        self.__setattr__(property, result)
+        return self
+
+
+class Binary(db.EmbeddedDocument):
+    start_time = db.DateTimeField()
+    d1 = db.ListField()
+    d2 = db.ListField()
+    d3 = db.ListField()
+    d4 = db.ListField()
+    d5 = db.ListField()
+    d6 = db.ListField()
+    d7 = db.ListField()
+    d8 = db.ListField()
+    d9 = db.ListField()
+    d10 = db.ListField()
+    d11 = db.ListField()
+    d12 = db.ListField()
+    d13 = db.ListField()
+    d14 = db.ListField()
+    d15 = db.ListField()
+    d16 = db.ListField()
+    d17 = db.ListField()
+    d18 = db.ListField()
+    d19 = db.ListField()
+    d20 = db.ListField()
+    d21 = db.ListField()
+    d22 = db.ListField()
+    d23 = db.ListField()
+    d24 = db.ListField()
+    d25 = db.ListField()
+
+    def create(self, property, result):
+        self.__setattr__(property, result)
+        return self
+
+
+class Ternary(db.EmbeddedDocument):
+    start_time = db.DateTimeField()
+    d1 = db.ListField()
+    d2 = db.ListField()
+    d3 = db.ListField()
+    d4 = db.ListField()
+    d5 = db.ListField()
+    d6 = db.ListField()
+    d7 = db.ListField()
+    d8 = db.ListField()
+    d9 = db.ListField()
+    d10 = db.ListField()
+    d11 = db.ListField()
+    d12 = db.ListField()
+    d13 = db.ListField()
+    d14 = db.ListField()
+    d15 = db.ListField()
+    d16 = db.ListField()
+    d17 = db.ListField()
+    d18 = db.ListField()
+    d19 = db.ListField()
+    d20 = db.ListField()
+    d21 = db.ListField()
+    d22 = db.ListField()
+    d23 = db.ListField()
+    d24 = db.ListField()
+    d25 = db.ListField()
+
+    def create(self, property, result):
+        self.__setattr__(property, result)
+        return self
+
+
 class Dichotic(db.Document):
-    pass
+    Single = db.EmbeddedDocumentField('Single')
+    Binary = db.EmbeddedDocumentField('Binary')
+    Ternary = db.EmbeddedDocumentField('Ternary')
+
+    def create(self, property, result):
+        self.__setattr__(property, result)
+        return self
+
+    def create_test(self, type, exam_number, result):
+        new_obj = eval(type.title())()
+        setattr(new_obj, exam_number, result)
+        setattr(self, type)
+
+    @staticmethod
+    def overwrite(dicho_type_exam,result):
+        for i in dicho_type_exam:
+            if i == 'start_time':
+                continue
+            elif len(dicho_type_exam[i]) != 0:
+                dicho_type_exam[i] = result
+
+        return dicho_type_exam
+
 
 
 class Exam(db.Document):
     user = db.ReferenceField('User')
     type = db.StringField(choices=EXAM_TYPE)
     pure_tone = db.EmbeddedDocumentField('PureTone')
+    dichotic = db.EmbeddedDocumentField('Dichotic')
 
     def __repr__(self):
         return '[Exam] user :{} type:{} pure_tone:{}'.format(self.user, self.type, self.pure_tone)
