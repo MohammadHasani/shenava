@@ -56,6 +56,7 @@ def pure_tone_report():
 @login_required
 def dichotic():
     req_json = request.get_json()
+
     try:
         dicho_type = req_json['type'].title()
         exam_number = req_json['exam_number']
@@ -67,21 +68,14 @@ def dichotic():
         passed_exam_before = Exam.passed_exam_before(current_user.id)
 
         if passed_exam_before:
-            dicho_type_exam = getattr(passed_exam_before.dichotic, dicho_type)
-            overwrite_dicho_type = Dichotic.overwrite(dicho_type_exam, result)
-            setattr(passed_exam_before.dichotic,dicho_type,overwrite_dicho_type)
-
-            # setattr(passed_exam_before, 'dichotic', passed_exam_before.dichotic)
-            print(passed_exam_before.dichotic.Single.d4)
-            print(type(passed_exam_before))
+            passed_exam_before.update(add_to_set__dichotic__Single__=result)
             passed_exam_before.save()
-            # print(type(passed_exam_before))
 
         else:
             new_obj.create(exam_number, result)
             new_dicho.create(dicho_type, new_obj)
 
-            new_exam = Exam(user=current_user['id'], type=EXAM_TYPE['PURE_TONE'], dichotic=new_dicho)
+            new_exam = Exam(user=current_user['id'], type=EXAM_TYPE['DICHOTIC'], dichotic=new_dicho)
             new_exam.save()
 
     except Exception as e:
