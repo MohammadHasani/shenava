@@ -56,7 +56,6 @@ def pure_tone_report():
 @login_required
 def dichotic():
     req_json = request.get_json()
-
     try:
         dicho_type = req_json['type'].title()
         exam_number = req_json['exam_number']
