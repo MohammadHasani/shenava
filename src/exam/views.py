@@ -67,8 +67,16 @@ def dichotic():
 
         passed_exam_before = Exam.passed_exam_before(current_user.id)
 
+        pull_all = 'pull__dichotic__Single__' + exam_number
+        prev_value =getattr(passed_exam_before.dichotic.Single,exam_number)[0]
+        pull_all_pair = {pull_all:prev_value}
+
+        key_name = 'add_to_set__dichotic__Single__' + exam_number
+        key_value = {key_name: result}
+
         if passed_exam_before:
-            passed_exam_before.update(add_to_set__dichotic__Single__=result)
+            passed_exam_before.update(**pull_all_pair)
+            passed_exam_before.update(**key_value)
             passed_exam_before.save()
 
         else:
@@ -82,3 +90,4 @@ def dichotic():
         print(e)
 
     return 'ok'
+
