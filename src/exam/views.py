@@ -59,35 +59,40 @@ def dichotic():
 
     try:
         dicho_type = req_json['type'].title()
-        exam_number = req_json['exam_number']
-        result = req_json['result']
+        results = req_json['result']
         new_dicho = Dichotic()
 
         new_obj = eval(dicho_type)()
 
         passed_exam_before = Exam.passed_exam_before(current_user.id)
 
-        pull_all = 'pull__dichotic__Single__' + exam_number
-        prev_value =getattr(passed_exam_before.dichotic.Single,exam_number)[0]
-        pull_all_pair = {pull_all:prev_value}
-
-        key_name = 'add_to_set__dichotic__Single__' + exam_number
-        key_value = {key_name: result}
-
         if passed_exam_before:
-            passed_exam_before.update(**pull_all_pair)
-            passed_exam_before.update(**key_value)
+            for exam_number, result in enumerate(results):
+                exam_number = 'd' + str(exam_number + 1)
+                pull_all = 'pull__dichotic__Single__' + exam_number
+                prev_value = getattr(passed_exam_before.dichotic.Single, exam_number)[0]
+                pull_all_pair = {pull_all: prev_value}
+
+                key_name = 'add_to_set__dichotic__Single__' + exam_number
+                key_value = {key_name: result}
+                passed_exam_before.update(**pull_all_pair)
+                passed_exam_before.update(**key_value)
             passed_exam_before.save()
+            return jsonify({'result': passed_exam_before, 'code': 200})
+
 
         else:
-            new_obj.create(exam_number, result)
-            new_dicho.create(dicho_type, new_obj)
+            for exam_number, result in enumerate(results):
+                exam_number = 'd' + str(exam_number + 1)
+                new_obj.create(exam_number, result)
+            for attr, value in new_obj.__dict__.items():
+                new_dicho.create(dicho_type, new_obj)
 
             new_exam = Exam(user=current_user['id'], type=EXAM_TYPE['DICHOTIC'], dichotic=new_dicho)
             new_exam.save()
+            return jsonify({'result': new_exam, 'code': 200})
+
 
     except Exception as e:
         print(e)
-
-    return 'ok'
 

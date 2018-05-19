@@ -57,7 +57,7 @@ class Single(db.EmbeddedDocument):
     d25 = db.ListField()
 
     def create(self, property, result):
-        self.__setattr__(property, result)
+        self.__setattr__(property, [result])
         return self
 
 
