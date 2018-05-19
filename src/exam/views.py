@@ -96,3 +96,13 @@ def dichotic():
     except Exception as e:
         print(e)
 
+
+@exam_blureprint.route('/dichotic/single', methods=['post'])
+@login_required
+def get_single_dichotic():
+    print('fuck u')
+    try:
+        exam = Exam.objects.get(user=current_user.id)
+        return jsonify({'result': exam.dichotic.Single, 'code': 200})
+    except Exception as e:
+        return jsonify({'result': False, 'code': 409})
