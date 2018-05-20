@@ -56,32 +56,42 @@ def pure_tone_report():
 @login_required
 def dichotic():
     req_json = request.get_json()
-
     try:
         dicho_type = req_json['type'].title()
         results = req_json['result']
         new_dicho = Dichotic()
-
         new_obj = eval(dicho_type)()
 
         passed_exam_before = Exam.passed_exam_before(current_user.id)
 
         if passed_exam_before:
-            for exam_number, result in enumerate(results):
-                exam_number = 'd' + str(exam_number + 1)
-                pull_all = 'pull__dichotic__Single__' + exam_number
-                prev_value = getattr(passed_exam_before.dichotic.Single, exam_number)[0]
-                pull_all_pair = {pull_all: prev_value}
+            passed_dichotic_before = Exam.passed_dichotic_before(current_user.id)
+            if passed_dichotic_before:
+                for exam_number, result in enumerate(results):
+                    exam_number = 'd' + str(exam_number + 1)
+                    pull_all = 'pull__dichotic__Single__' + exam_number
+                    prev_value = getattr(passed_exam_before.dichotic.Single, exam_number)[0]
+                    pull_all_pair = {pull_all: prev_value}
 
-                key_name = 'add_to_set__dichotic__Single__' + exam_number
-                key_value = {key_name: result}
-                passed_exam_before.update(**pull_all_pair)
-                passed_exam_before.update(**key_value)
-            passed_exam_before.save()
-            return jsonify({'result': passed_exam_before, 'code': 200})
+                    key_name = 'add_to_set__dichotic__Single__' + exam_number
+                    key_value = {key_name: result}
+                    passed_exam_before.update(**pull_all_pair)
+                    passed_exam_before.update(**key_value)
+                passed_exam_before.save()
+                return jsonify({'result': passed_exam_before, 'code': 200})
+            else:
+                print('here')
+                for exam_number, result in enumerate(results):
+                    exam_number = 'd' + str(exam_number + 1)
 
+                    key_name = 'add_to_set__dichotic__Single__' + exam_number
+                    key_value = {key_name: result}
+                    passed_exam_before.update(**key_value)
+                passed_exam_before = passed_exam_before.save()
+                return jsonify({'result': True, 'code': 200})
 
         else:
+            print('here')
             for exam_number, result in enumerate(results):
                 exam_number = 'd' + str(exam_number + 1)
                 new_obj.create(exam_number, result)
@@ -95,12 +105,12 @@ def dichotic():
 
     except Exception as e:
         print(e)
+        return jsonify({'result': 'error', 'code': 500})
 
 
-@exam_blureprint.route('/dichotic/single', methods=['post'])
+@exam_blureprint.route('/dichotic/single', methods=['get'])
 @login_required
 def get_single_dichotic():
-    print('fuck u')
     try:
         exam = Exam.objects.get(user=current_user.id)
         return jsonify({'result': exam.dichotic.Single, 'code': 200})

@@ -142,7 +142,7 @@ class Dichotic(db.Document):
         setattr(self, type)
 
     @staticmethod
-    def overwrite(dicho_type_exam,result):
+    def overwrite(dicho_type_exam, result):
         for i in dicho_type_exam:
             if i == 'start_time':
                 continue
@@ -150,7 +150,6 @@ class Dichotic(db.Document):
                 dicho_type_exam[i] = result
 
         return dicho_type_exam
-
 
 
 class Exam(db.Document):
@@ -165,6 +164,14 @@ class Exam(db.Document):
     @classmethod
     def passed_exam_before(cls, userid):
         return cls.objects.get(user=userid) if cls.objects(user=userid) else False
+
+    @classmethod
+    def passed_dichotic_before(cls, userid):
+        return cls.objects.get(user=userid) if cls.objects(user=userid, dichotic__exists=True) else False
+
+    @classmethod
+    def passed_pure_before(cls, userid):
+        return cls.objects.get(user=userid) if cls.objects(user=userid, pure_tone__exists=True) else False
 
     @classmethod
     def get_by_user_id(cls, userid):
