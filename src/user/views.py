@@ -32,7 +32,7 @@ def register():
     except MongoEngineException.ValidationError as e:
         for i, j in e.errors.items():
             print(i, j)
-            return 'kire khar'
+            return jsonify({'result': False, 'error': str(e)})
 
 
 @user_blureprint.route('/login', methods=['post'])

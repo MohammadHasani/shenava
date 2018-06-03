@@ -3,16 +3,16 @@ from src.misc.constracts import EXAM_TYPE, EXAM_STATUS
 from src.user.models import User
 
 
+# from src.speech_noise.models import SpeechNoise
+
 class PureTone(db.EmbeddedDocument):
     start_time = db.DateTimeField()
-    Right_125 = db.BooleanField()
     Right_250 = db.BooleanField()
     Right_500 = db.BooleanField()
     Right_1000 = db.BooleanField()
     Right_2000 = db.BooleanField()
     Right_4000 = db.BooleanField()
     Right_8000 = db.BooleanField()
-    Left_125 = db.BooleanField()
     Left_250 = db.BooleanField()
     Left_500 = db.BooleanField()
     Left_1000 = db.BooleanField()
@@ -57,7 +57,7 @@ class Single(db.EmbeddedDocument):
     d25 = db.ListField()
 
     def create(self, property, result):
-        self.__setattr__(property, [result])
+        self.__setattr__(property, result)
         return self
 
 
@@ -152,11 +152,24 @@ class Dichotic(db.Document):
         return dicho_type_exam
 
 
+class SpeechNoise(db.EmbeddedDocument):
+    start_time = db.DateTimeField()
+    right_silence = db.ListField()
+    left_silence = db.ListField()
+    right_noise = db.ListField()
+    left_noise = db.ListField()
+
+    def create(self, property, result):
+        self.__setattr__(property, result)
+        return self
+
+
 class Exam(db.Document):
     user = db.ReferenceField('User')
     type = db.StringField(choices=EXAM_TYPE)
     pure_tone = db.EmbeddedDocumentField('PureTone')
     dichotic = db.EmbeddedDocumentField('Dichotic')
+    speech_noise = db.EmbeddedDocumentField('SpeechNoise')
 
     def __repr__(self):
         return '[Exam] user :{} type:{} pure_tone:{}'.format(self.user, self.type, self.pure_tone)
@@ -166,27 +179,35 @@ class Exam(db.Document):
         return cls.objects.get(user=userid) if cls.objects(user=userid) else False
 
     @classmethod
-    def passed_dichotic_before(cls, userid):
-        return cls.objects.get(user=userid) if cls.objects(user=userid, dichotic__exists=True) else False
-
-    @classmethod
     def passed_pure_before(cls, userid):
-        return cls.objects.get(user=userid) if cls.objects(user=userid, pure_tone__exists=True) else False
+        return cls.objects.get(user=userid, type=EXAM_TYPE['PURE_TONE']) if cls.objects(user=userid, pure_tone__exists=True) else False
 
     @classmethod
-    def get_by_user_id(cls, userid):
-        return cls.objects.get(user=userid)
+    def passed_dichotic_before(cls, userid):
+        return cls.objects.get(user=userid, type=EXAM_TYPE['DICHOTIC']) if cls.objects(user=userid, dichotic__exists=True) else False
+
+    @classmethod
+    def passed_dicho_type_before(cls, userid, dicho_type):
+        dicho_type_phrase = 'dichotic__' + dicho_type + '__exists'
+        args = {'user': userid, dicho_type_phrase: True}
+        return cls.objects.get(user=userid) if cls.objects(**args) else False
+
+    @classmethod
+    def passed_speech_noise_before(cls, userid):
+        return cls.objects.get(user=userid, type=EXAM_TYPE['SPEECH_NOISE']) if cls.objects(user=userid, speech_noise__exists=True) else False
+
+    @classmethod
+    def get_puretone_by_user_id(cls, userid):
+        return cls.objects.get(user=userid, type=EXAM_TYPE['PURE_TONE'])
 
     def pure_tone_report(self):
         result = {}
-        result['Right_125'] = self.pure_tone.Right_125
         result['Right_250'] = self.pure_tone.Right_250
         result['Right_500'] = self.pure_tone.Right_500
         result['Right_1000'] = self.pure_tone.Right_1000
         result['Right_2000'] = self.pure_tone.Right_2000
         result['Right_4000'] = self.pure_tone.Right_4000
         result['Right_8000'] = self.pure_tone.Right_8000
-        result['Left_125'] = self.pure_tone.Left_125
         result['Left_250'] = self.pure_tone.Left_250
         result['Left_500'] = self.pure_tone.Left_500
         result['Left_1000'] = self.pure_tone.Left_1000
@@ -196,11 +217,34 @@ class Exam(db.Document):
 
         count = 0
         for i in result:
-            if i == False:
+            if result[i] == False:
                 count += 1
-        if count > 3:
+        if count >= 1:
             need_to_clinic = True
         else:
             need_to_clinic = False
-
         return {'result': result, 'need': need_to_clinic}
+
+    @classmethod
+    def get_dichotic_by_user_id(cls, userid):
+        return cls.objects.get(user=userid, type=EXAM_TYPE['DICHOTIC'])
+
+    def dichotic_report(self):
+        result = {}
+        result['Single'] = {}
+        result['Binary'] = {}
+        result['Ternary'] = {}
+
+        for i, j in self.dichotic.Single.items():
+            result['Single'][i] = j
+
+        for i, j in self.dichotic.Binary.items():
+            result['Binary'][i] = j
+
+        for i, j in self.dichotic.Ternary.items():
+            result['Ternary'][i] = j
+
+        return {'result': result}
+
+    def speech_noise(self):
+        pass
