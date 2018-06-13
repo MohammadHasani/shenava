@@ -168,8 +168,8 @@ class Exam(db.Document):
     user = db.ReferenceField('User')
     type = db.StringField(choices=EXAM_TYPE)
     pure_tone = db.EmbeddedDocumentField('PureTone')
-    dichotic = db.EmbeddedDocumentField('Dichotic')
     speech_noise = db.EmbeddedDocumentField('SpeechNoise')
+    dichotic = db.EmbeddedDocumentField('Dichotic')
 
     def __repr__(self):
         return '[Exam] user :{} type:{} pure_tone:{}'.format(self.user, self.type, self.pure_tone)
@@ -215,15 +215,16 @@ class Exam(db.Document):
         result['Left_4000'] = self.pure_tone.Left_4000
         result['Left_8000'] = self.pure_tone.Left_8000
 
-        count = 0
-        for i in result:
-            if result[i] == False:
-                count += 1
-        if count >= 1:
-            need_to_clinic = True
-        else:
-            need_to_clinic = False
-        return {'result': result, 'need': need_to_clinic}
+        if len(result)==12:
+            count = 0
+            for i in result:
+                if result[i] == False:
+                    count += 1
+            if count >= 1:
+                need_to_clinic = True
+            else:
+                need_to_clinic = False
+            return {'result': result, 'need': need_to_clinic}
 
     @classmethod
     def get_dichotic_by_user_id(cls, userid):
@@ -246,5 +247,9 @@ class Exam(db.Document):
 
         return {'result': result}
 
-    def speech_noise(self):
-        pass
+    # def speech_noise(self):
+    #     pass
+
+    @classmethod
+    def speech_noise_report(cls):
+        return cls.speech_noise
