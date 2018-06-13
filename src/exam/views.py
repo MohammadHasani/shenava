@@ -1,12 +1,13 @@
 from flask import request, jsonify
 from . import exam_blureprint
-from .models import Exam, PureTone, Dichotic, Single, Binary, Ternary
+from .models import Exam, PureTone, Dichotic, Single, Binary, Ternary, SpeechNoise
 from flask_login import current_user, login_required
 from src.misc.constracts import EXAM_TYPE, EXAM_STATUS
 from mongoengine import errors as MongoEngineError
 from datetime import datetime
-from src.speech_noise.models import SpeechNoise
 
+
+# from src.speech_noise.models import SpeechNoise
 
 @exam_blureprint.route('/pure_tone', methods=['post'])
 @login_required
@@ -47,6 +48,7 @@ def pure_tone_report():
     try:
         exam = Exam.get_puretone_by_user_id(current_user.id)
         pure_tone_report = exam.pure_tone_report()
+        print(pure_tone_report)
         return jsonify({'result': pure_tone_report, 'code': 200})
     except MongoEngineError.ValidationError as e:
         print(e)
@@ -154,45 +156,55 @@ def get_single_dichotic():
 
 @exam_blureprint.route('/speech_noise', methods=['post'])
 @login_required
-def speech_noise():
+def speech_noise1():
     req_json = request.get_json()
-    # try:
-    right_silence_result = req_json['result'][0:24]
-    left_silence_result = req_json['result'][25:49]
-    right_noise_result = req_json['result'][50:74]
-    left_noise_result = req_json['result'][75:99]
-    results = {'right_silence_result': right_silence_result, 'left_silence_result': left_silence_result,
-               'right_noise_result': right_noise_result, 'left_noise_result': left_noise_result}
-    print('here')
+    print('here232234')
+    try:
+        right_silence_result = req_json['result'][0:25]
+        left_silence_result = req_json['result'][25:50]
+        right_noise_result = req_json['result'][50:75]
+        left_noise_result = req_json['result'][75:]
+        results = {'right_silence': right_silence_result, 'left_silence': left_silence_result,
+                   'right_noise': right_noise_result, 'left_noise': left_noise_result}
+        print('here')
 
-    passed_speech_noise_before = Exam.passed_speech_noise_before(current_user.id)
-    if passed_speech_noise_before:
-        speech_noise = passed_speech_noise_before.speech_noise
-        speech_noise['right_silence'] = right_silence_result
-        speech_noise['left_silence'] = left_silence_result
-        speech_noise['right_noise'] = right_noise_result
-        speech_noise['left_noise'] = left_noise_result
-        passed_speech_noise_before.save()
-    else:
+        passed_speech_noise_before = Exam.passed_speech_noise_before(current_user.id)
+        if passed_speech_noise_before:
+            speech_noise = passed_speech_noise_before.speech_noise
+            speech_noise['right_silence'] = right_silence_result
+            speech_noise['left_silence'] = left_silence_result
+            speech_noise['right_noise'] = right_noise_result
+            speech_noise['left_noise'] = left_noise_result
+            passed_speech_noise_before.save()
+        else:
 
-        new_speech_noise = SpeechNoise(start_time=datetime.utcnow())
-        for exam, result in results.items():
-            new_speech_noise.create(exam, result)
-        print(new_speech_noise['right_silence'])
-        new_exam = Exam(user=current_user['id'], type=EXAM_TYPE['SPEECH_NOISE'], speech_noise=new_speech_noise)
-        new_exam.save()
+            new_speech_noise = SpeechNoise(start_time=datetime.utcnow())
+            for exam, result in results.items():
+                x = new_speech_noise.create(exam, result)
+            new_exam = Exam(user=current_user['id'], type=EXAM_TYPE['SPEECH_NOISE'], speech_noise=new_speech_noise)
+            new_exam.save()
 
-    return jsonify({'result': True, 'code': 200})
+        return jsonify({'result': True, 'code': 200})
 
-    # except MongoEngineError.ValidationError as e:
-    #     print(e)
-    #     return jsonify({'result': False, 'error': str(e)})
-    # except Exception as e:
-    #     print(e)
-    #     return jsonify({'result': False, 'error': str(e)})
+    except MongoEngineError.ValidationError as e:
+        print(e)
+        return jsonify({'result': False, 'error': str(e)})
+    except Exception as e:
+        print(e)
+        return jsonify({'result': False, 'error': str(e)})
 
 
-@exam_blureprint.route('/test', methods=['get'])
-@login_required
+@exam_blureprint.route('/speech_noise/report', methods=['get'])
+def speech_noise_report():
+    try:
+        exam = Exam.passed_speech_noise_before(current_user.id)
+        report = exam.speech_noise_report()
+        return jsonify({'result': report, 'status': 200})
+    except Exception as e:
+        return jsonify({'result': False, 'error': str(e)})
+
+
+@exam_blureprint.route('/test444', methods=['get'])
+# @login_required
 def test():
     return 'one'

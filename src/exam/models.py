@@ -215,16 +215,22 @@ class Exam(db.Document):
         result['Left_4000'] = self.pure_tone.Left_4000
         result['Left_8000'] = self.pure_tone.Left_8000
 
-        if len(result)==12:
-            count = 0
-            for i in result:
-                if result[i] == False:
-                    count += 1
-            if count >= 1:
-                need_to_clinic = True
-            else:
-                need_to_clinic = False
-            return {'result': result, 'need': need_to_clinic}
+        lentgh=0
+        for i in result:
+            if result[i] != None:
+                lentgh = lentgh+1
+
+        count = 0
+        for i in result:
+            if result[i] == False:
+                count += 1
+        if count >= 1:
+            need_to_clinic = True
+        elif lentgh!=12:
+            need_to_clinic = True
+        else:
+            need_to_clinic = False
+        return {'result': result, 'need': need_to_clinic}
 
     @classmethod
     def get_dichotic_by_user_id(cls, userid):

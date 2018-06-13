@@ -32,3 +32,5 @@ def kos():
     # print(request.args)
     # print('_____________________________')
     print(request.json)
+
+
