@@ -58,7 +58,7 @@ def pure_tone_report():
         return jsonify({'result': False, 'error': str(e)})
 
 
-@exam_blureprint.route('/dichotic', methods=['post'])
+@exam_blureprint.route('/dichotic/', methods=['post'])
 @login_required
 def dichotic():
     req_json = request.get_json()
@@ -91,7 +91,7 @@ def dichotic():
                 key_value = {key_name: result}
                 passed_dichotic_before.update(**key_value)
                 # {'add_to_set__dichotic__Single__d1': [5, 5]}
-                passed_dichotic_before.update(add_to_set__dichotic__Single__d1=[5, 5])
+                # passed_dichotic_before.update(add_to_set__dichotic__Single__d1=[5, 5])
                 passed_dichotic_before.save()
             return jsonify({'result': passed_dichotic_before, 'code': 200})
         else:
@@ -126,13 +126,23 @@ def dichotic():
         #     return jsonify({'result': 'error', 'code': 500})
 
 
-@exam_blureprint.route('/dichotic/report', methods=['get'])
+@exam_blureprint.route('/dichotic/report/', methods=['get'])
 @login_required
 def dichotic_report():
     try:
         exam = Exam.get_dichotic_by_user_id(current_user.id)
-        dichotic_report = exam.pure_tone_report()
-        return jsonify({'result': dichotic, 'code': 200})
+        dichotic_report = exam.count_dichotic_score()
+        if exam.dichotic.Ternary != None:
+            return jsonify({'result': {'left_score': dichotic_report[1], 'right_score': dichotic_report[0],
+                                       'correct_answer': dichotic_report[3] + dichotic_report[2],
+                                       'wrong_answer': 150 - (dichotic_report[3] + dichotic_report[2])}, 'code': 200})
+        elif exam.dichotic.Binary != None:
+            return jsonify({'result': {'left_score': dichotic_report[1], 'right_score': dichotic_report[0],
+                                       'correct_answer': dichotic_report[3] + dichotic_report[2],
+                                       'wrong_answer': 100 - (dichotic_report[3] + dichotic_report[2])}, 'code': 200})
+        elif exam.dichotic.Single != None:
+            pass
+
     except MongoEngineError.ValidationError as e:
         print(e)
         return jsonify({'result': False, 'error': str(e)})
@@ -194,12 +204,15 @@ def speech_noise1():
         return jsonify({'result': False, 'error': str(e)})
 
 
-@exam_blureprint.route('/speech_noise/report', methods=['get'])
+@exam_blureprint.route('/speech_noise/report/', methods=['get'])
 def speech_noise_report():
     try:
         exam = Exam.passed_speech_noise_before(current_user.id)
         report = exam.speech_noise_report()
-        return jsonify({'result': report, 'status': 200})
+        correct_answer = report[0] + report[1] + report[2] + \
+                         report[3]
+        return jsonify(
+            {'result': {'correct_answer': correct_answer, 'wrong_answer': 100 - correct_answer}, 'status': 200})
     except Exception as e:
         return jsonify({'result': False, 'error': str(e)})
 

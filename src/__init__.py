@@ -26,11 +26,11 @@ def error_401(error):
 #
 
 @app.before_request
-def kos():
-    # print(request.headers)
-    # print('_____________________________')
-    # print(request.args)
-    # print('_____________________________')
+def befor_get_rquest():
+    print(request.headers)
+    print('_____________________________')
+    print(request.args)
+    print('_____________________________')
     print(request.json)
 
 

@@ -1,5 +1,6 @@
 from src import db
-from src.misc.constracts import EXAM_TYPE, EXAM_STATUS
+from src.misc.constracts import EXAM_TYPE, EXAM_STATUS, right_dichotic_binary, left_dichotic_binary, \
+    right_dichotic_ternary, left_dichotic_ternary, right_silence, left_silence, right_noise, left_noise
 from src.user.models import User
 
 
@@ -180,11 +181,13 @@ class Exam(db.Document):
 
     @classmethod
     def passed_pure_before(cls, userid):
-        return cls.objects.get(user=userid, type=EXAM_TYPE['PURE_TONE']) if cls.objects(user=userid, pure_tone__exists=True) else False
+        return cls.objects.get(user=userid, type=EXAM_TYPE['PURE_TONE']) if cls.objects(user=userid,
+                                                                                        pure_tone__exists=True) else False
 
     @classmethod
     def passed_dichotic_before(cls, userid):
-        return cls.objects.get(user=userid, type=EXAM_TYPE['DICHOTIC']) if cls.objects(user=userid, dichotic__exists=True) else False
+        return cls.objects.get(user=userid, type=EXAM_TYPE['DICHOTIC']) if cls.objects(user=userid,
+                                                                                       dichotic__exists=True) else False
 
     @classmethod
     def passed_dicho_type_before(cls, userid, dicho_type):
@@ -194,7 +197,8 @@ class Exam(db.Document):
 
     @classmethod
     def passed_speech_noise_before(cls, userid):
-        return cls.objects.get(user=userid, type=EXAM_TYPE['SPEECH_NOISE']) if cls.objects(user=userid, speech_noise__exists=True) else False
+        return cls.objects.get(user=userid, speech_noise__exists=True) if cls.objects.get(user=userid,
+                                                                                          speech_noise__exists=True) else False
 
     @classmethod
     def get_puretone_by_user_id(cls, userid):
@@ -215,10 +219,10 @@ class Exam(db.Document):
         result['Left_4000'] = self.pure_tone.Left_4000
         result['Left_8000'] = self.pure_tone.Left_8000
 
-        lentgh=0
+        lentgh = 0
         for i in result:
             if result[i] != None:
-                lentgh = lentgh+1
+                lentgh = lentgh + 1
 
         count = 0
         for i in result:
@@ -226,7 +230,7 @@ class Exam(db.Document):
                 count += 1
         if count >= 1:
             need_to_clinic = True
-        elif lentgh!=12:
+        elif lentgh != 12:
             need_to_clinic = True
         else:
             need_to_clinic = False
@@ -234,28 +238,116 @@ class Exam(db.Document):
 
     @classmethod
     def get_dichotic_by_user_id(cls, userid):
-        return cls.objects.get(user=userid, type=EXAM_TYPE['DICHOTIC'])
+        return cls.objects.get(user=userid, dichotic__exists=True)
 
     def dichotic_report(self):
-        result = {}
-        result['Single'] = {}
-        result['Binary'] = {}
-        result['Ternary'] = {}
+        self.result = {}
+        self.result['Single'] = {}
+        self.result['Binary'] = {}
+        self.result['Ternary'] = {}
 
-        for i, j in self.dichotic.Single.items():
-            result['Single'][i] = j
+        # print(self.dichotic.Ternary)
+        if self.dichotic.Single != None:
+            for i in self.dichotic.Single:
+                self.result['Single'][i] = self.dichotic.Single[i]
 
-        for i, j in self.dichotic.Binary.items():
-            result['Binary'][i] = j
+        if self.dichotic.Binary != None:
+            for i in self.dichotic.Binary:
+                self.result['Binary'][i] = self.dichotic.Binary[i]
 
-        for i, j in self.dichotic.Ternary.items():
-            result['Ternary'][i] = j
+        if self.dichotic.Ternary != None:
+            for i in self.dichotic.Ternary:
+                self.result['Ternary'][i] = self.dichotic.Ternary[i]
 
-        return {'result': result}
+        return {'result': self.result}
 
-    # def speech_noise(self):
-    #     pass
+    def count_dichotic_score(self):
+        self.dichotic_report()
+        if self.result['Single'] != {}:
+            pass
+        elif self.result['Binary'] != {}:
+            score_left = 0
+            score_right = 0
+            right_answer = 0
+            left_answer = 0
 
-    @classmethod
-    def speech_noise_report(cls):
-        return cls.speech_noise
+            count = 0
+            for i, j in self.result['Binary'].items():
+                if i == 'start_time':
+                    continue
+                right_flag = 0
+                left_flag = 0
+                for key, value in enumerate(j):
+                    if value in right_dichotic_binary[count]:
+                        if right_flag >= 2:
+                            continue
+                        right_flag += 1
+                        right_answer += 1
+                        if right_flag == 2:
+                            score_right = score_right + 4
+                    elif value in left_dichotic_binary[count]:
+                        if left_flag >= 2:
+                            continue
+                        left_flag += 1
+                        left_answer += 1
+                        if left_flag == 2:
+                            score_left = score_left + 4
+                count += 1
+            return (score_right, score_left, right_answer, left_answer)
+        elif self.result['Ternary'] != {}:
+            score_left = 0
+            score_right = 0
+            right_answer = 0
+            left_answer = 0
+
+            count = 0
+            for i, j in self.result['Ternary'].items():
+                if i == 'start_time':
+                    continue
+                right_flag = 0
+                left_flag = 0
+                for key, value in enumerate(j):
+                    if value in right_dichotic_ternary[count]:
+                        if right_flag >= 3:
+                            continue
+                        right_flag += 1
+                        right_answer += 1
+                        if right_flag == 3:
+                            score_right = score_right + 4
+                    elif value in left_dichotic_ternary[count]:
+                        if left_flag >= 3:
+                            continue
+                        left_flag += 1
+                        left_answer += 1
+                        if left_flag == 3:
+                            score_left = score_left + 4
+                count += 1
+            return (score_right, score_left, right_answer, left_answer)
+
+    def speech_noise_report(self):
+        right_silence_score = 0
+        left_silence_score = 0
+        right_noise_score = 0
+        left_noise_score = 0
+
+        for i in self.speech_noise:
+            if i == 'start_time':
+                continue
+            elif i == 'right_silence':
+                for k, v in enumerate(self.speech_noise[i]):
+                    if v in right_silence:
+                        right_silence_score += 1
+            elif i == 'left_silence':
+                for k, v in enumerate(self.speech_noise[i]):
+                    if v in left_silence:
+                        left_silence_score += 1
+            elif i == 'right_noise':
+                for k, v in enumerate(self.speech_noise[i]):
+                    if v in right_noise:
+                        right_noise_score += 1
+            elif i == 'left_noise':
+                for k, v in enumerate(self.speech_noise[i]):
+                    if v in left_noise:
+                        left_noise_score += 1
+
+        return (right_silence_score, left_silence_score, right_noise_score, left_noise_score)
